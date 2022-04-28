@@ -5,5 +5,6 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
-
+  return Object.fromEntries(fields
+    .map(field => [field, obj[field]]));
 };
