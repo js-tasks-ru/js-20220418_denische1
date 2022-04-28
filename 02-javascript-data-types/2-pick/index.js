@@ -5,6 +5,6 @@
  * @returns {object} - returns the new object
  */
 export const pick = (obj, ...fields) => {
-  return Object.fromEntries(fields
-    .map(field => [field, obj[field]]));
+  return Object.fromEntries(Object.entries(obj)
+    .filter(entry => fields.includes(entry[0])));
 };
