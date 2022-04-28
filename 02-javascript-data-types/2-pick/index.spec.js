@@ -18,7 +18,7 @@ describe('javascript-data-types/pick', () => {
   it('should return an empty object if passed fields does not found', () => {
     const obj = {foo: 'foo', bar: 'bar'};
 
-    expect(pick(obj, 'riba')).toEqual({});
-    expect(pick(obj, 'riba')).toEqual({});
+    expect(pick(obj, 'riba')).toStrictEqual({});
+    expect(pick(obj, 'riba')).toStrictEqual({});
   });
 });
