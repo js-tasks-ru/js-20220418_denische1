@@ -1,59 +1,46 @@
 export default class ColumnChart {
-  _element;
-  _dataElement;
-  _chartHeight = 50;
+  static #loadingClass = 'column-chart_loading';
+  static #dataElementClass = 'column-chart__chart';
 
-  get element() {
-    return this._element;
-  }
-
-  get chartHeight() {
-    return this._chartHeight;
-  }
-
-  static get loadingClass() {
-    return 'column-chart_loading';
-  }
-
-  static get dataElementClass() {
-    return 'column-chart__chart';
-  }
+  #data;
+  #label;
+  #link;
+  #value;
+  #element;
+  #dataElement;
+  #chartHeight = 50;
 
   constructor({
     data = [],
     label = '',
     link = '',
     value = 0,
-    formatHeading
+    formatHeading = value => value
   } = {}) {
-    this._data = data;
-    this._label = label;
-    this._link = link;
-    this._value = typeof formatHeading === "function" ? formatHeading(value) : value;
+    this.#data = data;
+    this.#label = label;
+    this.#link = link;
+    this.#value = formatHeading(value);
 
     this.render();
   }
 
-  render() {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = this.getTemplate();
-    this._element = wrapper.firstElementChild;
+  get element() {
+    return this.#element;
+  }
 
-    if (!this._data.length) {
-      this._element.classList.add(ColumnChart.loadingClass);
-    }
-
-    this._dataElement = this._element.querySelector('.' + ColumnChart.dataElementClass);
+  get chartHeight() {
+    return this.#chartHeight;
   }
 
   update(data) {
-    this.element.classList.add(ColumnChart.loadingClass);
+    this.element.classList.add(ColumnChart.#loadingClass);
 
-    this._data = data;
-    this._dataElement.innerHTML = this.getColumnsTemplate();
+    this.#data = data;
+    this.#dataElement.innerHTML = this.getColumnsTemplate();
 
-    if (this._data.length) {
-      this.element.classList.remove(ColumnChart.loadingClass);
+    if (this.#data.length) {
+      this.element.classList.remove(ColumnChart.#loadingClass);
     }
   }
 
@@ -65,17 +52,29 @@ export default class ColumnChart {
     this.element.remove();
   }
 
+  render() {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = this.getTemplate();
+    this.#element = wrapper.firstElementChild;
+
+    if (!this.#data.length) {
+      this.#element.classList.add(ColumnChart.#loadingClass);
+    }
+
+    this.#dataElement = this.#element.querySelector('.' + ColumnChart.#dataElementClass);
+  }
+
   getTemplate() {
     return `
-    <div class="column-chart" style="--chart-height: ${this._chartHeight}">
+    <div class="column-chart" style="--chart-height: ${this.#chartHeight}">
       <div class="column-chart__title">
-        ${this._label}
-        <a href="${this._link}" class="column-chart__link">View all</a>
+        ${this.#label}
+        ${this.getLinkTemplate()}
       </div>
       <div class="column-chart__container">
-        <div data-element="header" class="column-chart__header">${this._value}</div>
-        <div data-element="body" class="${ColumnChart.dataElementClass}">
-            ${this.getColumnsTemplate(this._data)}
+        <div data-element="header" class="column-chart__header">${this.#value}</div>
+        <div data-element="body" class="${ColumnChart.#dataElementClass}">
+            ${this.getColumnsTemplate(this.#data)}
         </div>
       </div>
     </div>
@@ -83,10 +82,10 @@ export default class ColumnChart {
   }
 
   getColumnsTemplate() {
-    const maxValue = Math.max(...this._data);
-    const scale = this._chartHeight / maxValue;
+    const maxValue = Math.max(...this.#data);
+    const scale = this.#chartHeight / maxValue;
 
-    return this._data
+    return this.#data
       .map(value => this.getColumnTemplate(Math.floor(value * scale), Math.round(value / maxValue * 100)))
       .join('');
   }
@@ -95,4 +94,7 @@ export default class ColumnChart {
     return `<div style="--value: ${value}" data-tooltip="${tooltip}%"></div>`;
   }
 
+  getLinkTemplate() {
+    return this.#link ? `<a href="${this.#link}" class="column-chart__link">View all</a>` : '';
+  }
 }
