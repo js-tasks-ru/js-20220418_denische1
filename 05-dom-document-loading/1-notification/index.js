@@ -45,6 +45,7 @@ export default class NotificationMessage {
   }
 
   remove() {
+    clearTimeout(NotificationMessage.#removeElementTimerId);
     this.element.remove();
   }
 
