@@ -1,4 +1,7 @@
 export default class SortableTable {
+  static #sortOrderAsc = 'asc';
+  static #sortOrderDesc = 'desc';
+
   #headers;
   #rows
   #element;
@@ -26,18 +29,22 @@ export default class SortableTable {
     this.element.remove();
   }
 
-  sort(field, order = 'asc') {
+  sort(field, order = SortableTable.#sortOrderAsc) {
     let header = this.getHeader(field);
 
     if (header === undefined || !header.sortable) {
       return;
     }
 
-    const sortDirection = order === 'desc' ? -1 : 1;
+    order = order === SortableTable.#sortOrderAsc ? SortableTable.#sortOrderAsc : SortableTable.#sortOrderDesc;
+    const sortDirection = order === SortableTable.#sortOrderAsc ? 1 : -1;
+
+    header.element.dataset.order = order;
+    header.element.append(this.#subElements.arrow);
 
     this.#rows.sort((aRow, bRow) => aRow.compare(bRow, header) * sortDirection);
 
-    this.refresh();
+    this.refreshBody();
   }
 
   getHeader(headerId) {
@@ -48,12 +55,18 @@ export default class SortableTable {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = this.getTemplate();
     this.#element = wrapper.firstElementChild;
+
     this.#subElements = Object.fromEntries(Array.from(this.#element.querySelectorAll('[data-element]'))
       .map(dataElement => [dataElement.dataset.element, dataElement]));
-    this.refresh();
+    this.#subElements.header.append(...this.#headers.map(header => header.element));
+
+    wrapper.innerHTML = this.getSortArrowTemplate();
+    this.#subElements.arrow = wrapper.firstElementChild;
+
+    this.refreshBody();
   }
 
-  refresh() {
+  refreshBody() {
     this.#subElements.body.append(...this.#rows.map(row => row.element));
   }
 
@@ -61,29 +74,26 @@ export default class SortableTable {
     return `
 <div data-element="productsContainer" class="products-list__container">
   <div class="sortable-table">
-
-    <div data-element="header" class="sortable-table__header sortable-table__row">
-        ${this.getHeaderTemplate()}
-    </div>
-
+    <div data-element="header" class="sortable-table__header sortable-table__row"></div>
     <div data-element="body" class="sortable-table__body"></div>
-
     <div data-element="loading" class="loading-line sortable-table__loading-line"></div>
-
     <div data-element="emptyPlaceholder" class="sortable-table__empty-placeholder">
       <div>
         <p>No products satisfies your filter criteria</p>
         <button type="button" class="button-primary-outline">Reset all filters</button>
       </div>
     </div>
-
   </div>
 </div>
     `;
   }
 
-  getHeaderTemplate() {
-    return this.#headers.reduce((template, header) => template + header.getTemplate(), '');
+  getSortArrowTemplate() {
+    return `
+    <span data-element="arrow" class="sortable-table__sort-arrow">
+      <span class="sort-arrow"></span>
+    </span>
+    `;
   }
 }
 
@@ -93,6 +103,7 @@ class SortableTableHeader {
   sortable;
   sortType;
   template;
+  #element
 
   constructor({
                 id,
@@ -108,6 +119,18 @@ class SortableTableHeader {
     this.sortable = sortable;
     this.sortType = sortType;
     this.template = template;
+
+    this.render();
+  }
+
+  get element() {
+    return this.#element;
+  }
+
+  render() {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = this.getTemplate();
+    this.#element = wrapper.firstElementChild;
   }
 
   getTemplate() {
