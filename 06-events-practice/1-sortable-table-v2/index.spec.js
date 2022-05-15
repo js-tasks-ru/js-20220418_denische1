@@ -114,6 +114,7 @@ describe('events-practice/sortable-table-v2', () => {
     });
 
     price.dispatchEvent(pointerdown);
+    price.dispatchEvent(pointerdown);
 
     const { body } = sortableTable.subElements;
     const firstRow = body.firstElementChild;
