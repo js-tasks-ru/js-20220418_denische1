@@ -15,6 +15,9 @@ describe('events-practice/double-slider', () => {
       };
     });
 
+    Element.prototype.setPointerCapture = jest.fn(() => {
+    });
+
     doubleSlider = new DoubleSlider({
       min: 100,
       max: 200,
@@ -222,7 +225,7 @@ describe('events-practice/double-slider', () => {
     const customEvent = spyDispatchEvent.mock.calls[0][0];
 
     expect(spyDispatchEvent).toHaveBeenCalled();
-    expect(customEvent.detail).toEqual({ from: 130, to: 150 });
+    expect(customEvent.detail).toEqual({from: 130, to: 150});
   });
 
   it('should have ability to be destroyed', () => {

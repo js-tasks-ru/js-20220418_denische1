@@ -4,9 +4,6 @@ export default class DoubleSlider {
   #element;
   #elements;
 
-  #draggingThumb;
-  #shiftX;
-
   #min;
   #max;
   #formatValue;
@@ -29,7 +26,7 @@ export default class DoubleSlider {
 
     this.render();
 
-    this.onThumbPointerUp = this.onThumbPointerUp.bind(this);
+    this.onThumbLostPointerCapture = this.onThumbLostPointerCapture.bind(this);
     this.onThumbPointerMove = this.onThumbPointerMove.bind(this);
   }
 
@@ -58,59 +55,69 @@ export default class DoubleSlider {
 
   onThumbPointerDown(event) {
     event.preventDefault();
-    this.#draggingThumb = event.target;
+    event.target.setPointerCapture(event.pointerId);
 
-    let thumbCoords = this.#draggingThumb.getBoundingClientRect();
+    let thumbCoords = event.target.getBoundingClientRect();
 
-    if (this.#draggingThumb === this.#elements.thumbLeft) {
-      this.#shiftX = thumbCoords.right - event.clientX;
+    if (event.target === this.#elements.thumbLeft) {
+      event.target.dataset.shiftX = thumbCoords.right - event.clientX;
     } else {
-      this.#shiftX = thumbCoords.left - event.clientX;
+      event.target.dataset.shiftX = thumbCoords.left - event.clientX;
     }
 
     this.#element.classList.add("range-slider_dragging");
 
-    document.addEventListener("pointermove", this.onThumbPointerMove);
-    document.addEventListener("pointerup", this.onThumbPointerUp);
+    event.target.addEventListener("pointermove", this.onThumbPointerMove);
+    event.target.addEventListener("lostpointercapture", this.onThumbLostPointerCapture);
   }
 
-
-  onThumbPointerUp() {
+  onThumbLostPointerCapture(event) {
     this.#element.classList.remove("range-slider_dragging");
 
-    document.removeEventListener("pointermove", this.onThumbPointerMove);
-    document.removeEventListener("pointerup", this.onThumbPointerUp);
+    event.target.removeEventListener("pointermove", this.onThumbPointerMove);
+    event.target.removeEventListener("lostpointercapture", this.onThumbLostPointerCapture);
 
-    this.#element.dispatchEvent(new CustomEvent(DoubleSlider.#eventName, {
-      detail: this.getValue(),
-      bubbles: true
-    }));
+    this.dispatchEvent();
   }
 
   onThumbPointerMove(event) {
     event.preventDefault();
-    if (this.#draggingThumb === this.#elements.thumbLeft) {
-      let left = (event.clientX - this.#elements.inner.getBoundingClientRect().left + this.#shiftX) / this.#elements.inner.getBoundingClientRect().width * 100;
-      const right = parseFloat(this.#elements.thumbRight.style.right);
-      left = this.getValidPercentValue(left, right);
 
-      this.#elements.progress.style.left = left + "%";
-      this.#draggingThumb.style.left = left + "%";
-      this.#elements.from.innerHTML = this.#formatValue(this.getValue().from);
+    if (event.target === this.#elements.thumbLeft) {
+      this.handleThumbLeftMove(event);
     } else {
-      let right = (this.#elements.inner.getBoundingClientRect().right - event.clientX - this.#shiftX) / this.#elements.inner.getBoundingClientRect().width * 100;
-      const left = parseFloat(this.#elements.thumbLeft.style.left);
-      right = this.getValidPercentValue(right, left);
-
-      this.#draggingThumb.style.right = right + "%";
-      this.#elements.progress.style.right = right + "%";
-      this.#elements.to.innerHTML = this.#formatValue(this.getValue().to);
+      this.handleThumbRightMove(event);
     }
 
-    this.#element.dispatchEvent(new CustomEvent(DoubleSlider.#eventName, {
-      detail: this.getValue(),
-      bubbles: true
-    }));
+    this.dispatchEvent();
+  }
+
+  handleThumbLeftMove(event) {
+    let left = (event.clientX - this.#elements.inner.getBoundingClientRect().left + parseInt(this.#elements.thumbLeft.dataset.shiftX)) / this.#elements.inner.getBoundingClientRect().width * 100;
+    const right = parseFloat(this.#elements.thumbRight.style.right);
+    left = this.getValidPercentValue(left, right);
+
+    this.#elements.progress.style.left = left + "%";
+    this.#elements.thumbLeft.style.left = left + "%";
+
+    const from = Math.round(this.#min + .01 * parseFloat(this.#elements.thumbLeft.style.left) * (this.#max - this.#min));
+
+    this.#selected.from = from;
+    this.#elements.from.innerHTML = this.#formatValue(from);
+  }
+
+  handleThumbRightMove(event) {
+    let right = (this.#elements.inner.getBoundingClientRect().right - event.clientX - parseInt(this.#elements.thumbRight.dataset.shiftX)) / this.#elements.inner.getBoundingClientRect().width * 100;
+    const left = parseFloat(this.#elements.thumbLeft.style.left);
+    right = this.getValidPercentValue(right, left);
+
+    this.#elements.thumbRight.style.right = right + "%";
+    this.#elements.progress.style.right = right + "%";
+
+    const to = Math.round(this.#max - .01 * parseFloat(this.#elements.thumbRight.style.right) * (this.#max - this.#min));
+
+    this.#selected.to = to;
+    this.#elements.to.innerHTML = this.#formatValue(to);
   }
 
   getValidPercentValue(toValidateValue, secondValue) {
@@ -125,11 +132,11 @@ export default class DoubleSlider {
     return toValidateValue;
   }
 
-  getValue() {
-    return {
-      from: Math.round(this.#min + .01 * parseFloat(this.#elements.thumbLeft.style.left) * (this.#max - this.#min)),
-      to: Math.round(this.#max - .01 * parseFloat(this.#elements.thumbRight.style.right) * (this.#max - this.#min))
-    };
+  dispatchEvent() {
+    this.#element.dispatchEvent(new CustomEvent(DoubleSlider.#eventName, {
+      detail: this.#selected,
+      bubbles: true
+    }));
   }
 
   update() {
@@ -144,8 +151,10 @@ export default class DoubleSlider {
 
   destroy() {
     this.#element.remove();
-    document.removeEventListener("pointermove", this.onThumbPointerMove);
-    document.removeEventListener("pointerup", this.onThumbPointerUp);
+    this.#elements.thumbLeft.removeEventListener("pointermove", this.onThumbPointerMove);
+    this.#elements.thumbLeft.removeEventListener("lostpointercapture", this.onThumbLostPointerCapture);
+    this.#elements.thumbRight.removeEventListener("pointermove", this.onThumbPointerMove);
+    this.#elements.thumbRight.removeEventListener("lostpointercapture", this.onThumbLostPointerCapture);
   }
 
   getTemplate() {
