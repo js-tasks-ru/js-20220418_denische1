@@ -36,7 +36,7 @@ describe('async-code-fetch-api-part-1/column-chart', () => {
   });
 
   it('should render loaded data correctly', async () => {
-    const { body } = columnChart.subElements;
+    const {body} = columnChart.subElements;
     const expectedData = Object.values(ordersData);
 
     const from = new Date();
@@ -49,7 +49,7 @@ describe('async-code-fetch-api-part-1/column-chart', () => {
   it('should have ability to define "label"', () => {
     const label = 'New label';
 
-    columnChart = new ColumnChart({ label });
+    columnChart = new ColumnChart({label});
 
     const title = columnChart.element.querySelector('.column-chart__title');
 
@@ -59,7 +59,8 @@ describe('async-code-fetch-api-part-1/column-chart', () => {
   it('should have ability to define "link"', () => {
     const link = 'https://google.com';
 
-    columnChart = new ColumnChart({ link });
+    columnChart = new ColumnChart({link});
+    document.body.append(columnChart.element);
 
     const columnLink = columnChart.element.querySelector('.column-chart__link');
 
@@ -83,7 +84,7 @@ describe('async-code-fetch-api-part-1/column-chart', () => {
 
     await columnChart.update(new Date('2020-04-06'), new Date('2020-05-06'));
 
-    const { body } = columnChart.subElements;
+    const {body} = columnChart.subElements;
 
     expect(body.children.length).toEqual(Object.values(data).length);
   });
