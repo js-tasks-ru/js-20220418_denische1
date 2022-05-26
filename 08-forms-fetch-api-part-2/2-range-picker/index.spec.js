@@ -29,14 +29,6 @@ describe('forms-fetch-api-part-2/range-picker', () => {
     expect(rangePicker.element).toBeInTheDocument();
   });
 
-  it('should initially show only input', () => {
-    const selector = rangePicker.element.querySelector('.rangepicker__selector');
-    const input = rangePicker.element.querySelector('.rangepicker__input');
-
-    expect(input).toBeInstanceOf(HTMLElement);
-    expect(selector.innerHTML).toEqual('');
-  });
-
   it('should be opened on click', () => {
     const input = rangePicker.element.querySelector('.rangepicker__input');
 
