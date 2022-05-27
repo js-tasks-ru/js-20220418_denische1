@@ -19,6 +19,9 @@ describe('tests-for-frontend-apps/sortable-list', () => {
       };
     });
 
+    Element.prototype.setPointerCapture = jest.fn(() => {
+    });
+
     sortableList = new SortableList({
       items: data.map(item => {
         const element = document.createElement('li');
