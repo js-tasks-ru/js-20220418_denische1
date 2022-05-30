@@ -13,9 +13,7 @@ export default class SortableList {
   render(items) {
     this.#element = document.createElement('ul');
     this.element.className = 'sortable-list';
-    items.forEach(item => item.classList.add('sortable-list__item'));
-    this.#element.append(...items);
-
+    this.append(...items);
     this.#placeHolder = document.createElement('div');
     this.#placeHolder.className = 'sortable-list__placeholder';
 
@@ -23,8 +21,24 @@ export default class SortableList {
     this.#element.addEventListener('pointerdown', this.#onGrabPointerDown);
   }
 
+  append(...items) {
+    items.forEach(item => item.classList.add('sortable-list__item'));
+    this.#element.append(...items);
+  }
+
+  set(...items) {
+    this.clear();
+    this.append(...items);
+  }
+
+  clear() {
+    this.#element.innerHTML = '';
+  }
+
   destroy() {
     this.remove();
+    this.#element = null;
+    this.#placeHolder = null;
   }
 
   remove() {
